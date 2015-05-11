@@ -1,5 +1,6 @@
 package com.rubik.crimealert;
 
+import android.graphics.Color;
 import android.location.Location;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
@@ -11,20 +12,25 @@ import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polygon;
+import com.google.android.gms.maps.model.PolygonOptions;
 
 public class MapsActivity extends FragmentActivity  implements
-        GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener {
+        GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener, OnMapReadyCallback {
 
     private Marker myLocationMarker;
     GoogleApiClient mGoogleApiClient;
     Location mLastLocation;
     LocationRequest mLocationRequest;
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
+
+    Polygon[][] polygons;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,7 +40,7 @@ public class MapsActivity extends FragmentActivity  implements
         setUpMapIfNeeded();
         buildGoogleApiClient();
 
-        mGoogleApiClient.connect();
+  //      mGoogleApiClient.connect();
         createLocationRequest();
     }
 
@@ -64,12 +70,17 @@ public class MapsActivity extends FragmentActivity  implements
         // Do a null check to confirm that we have not already instantiated the map.
         if (mMap == null) {
             // Try to obtain the map from the SupportMapFragment.
+
+
             mMap = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map))
                     .getMap();
             // Check if we were successful in obtaining the map.
             if (mMap != null) {
                 setUpMap();
             }
+
+            SupportMapFragment mapFragment = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map));
+            mapFragment.getMapAsync(this);
         }
     }
 
@@ -122,4 +133,36 @@ public class MapsActivity extends FragmentActivity  implements
 
     }
 
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        mMap.setMyLocationEnabled(true);
+
+        polygons = new Polygon[32][32];
+
+
+
+        double latStep = (G.dhakaEndLatLng.latitude - G.dhakaStartLatLng.latitude)/32.0;
+        double lngStep = (G.dhakaEndLatLng.longitude - G.dhakaStartLatLng.longitude)/32.0;
+
+        for(int i=0; i<32; ++i){
+            for(int j=0; j<32; ++j){
+
+                polygons[i][j] =  mMap.addPolygon(new PolygonOptions()
+                                .add(
+                                        new LatLng(G.dhakaStartLatLng.latitude + i*latStep, G.dhakaStartLatLng.longitude + j*lngStep),
+                                        new LatLng(G.dhakaStartLatLng.latitude + (i+1)*latStep, G.dhakaStartLatLng.longitude + j*lngStep),
+                                        new LatLng(G.dhakaStartLatLng.latitude + (i+1)*latStep, G.dhakaStartLatLng.longitude + (j+1)*lngStep),
+                                        new LatLng(G.dhakaStartLatLng.latitude + i*latStep, G.dhakaStartLatLng.longitude + (j+1)*lngStep)
+
+                                )
+                                .fillColor(Color.argb(200, (int)(Math.random()*255), 0,0))
+                                .strokeColor(Color.TRANSPARENT)
+
+
+                );
+            }
+
+        }
+
+    }
 }
